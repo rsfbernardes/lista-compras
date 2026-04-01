@@ -1,38 +1,104 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lista de Compras Premium</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lista de Compras Premium</title>
 
-  <style>
-    body { font-family: system-ui; margin:0; background:#0f172a; color:#e2e8f0; }
-    header { position:sticky; top:0; background:#020617; padding:15px; display:flex; justify-content:space-between; border-bottom:1px solid #1e293b; }
-    .total { font-size:1.4rem; font-weight:bold; color:#22c55e; }
-    .container { padding:12px; }
+<style>
+body { font-family: system-ui; margin:0; background:#0f172a; color:#e2e8f0; }
 
-    .item { background:#020617; margin-bottom:10px; padding:12px; border-radius:12px; display:flex; align-items:center; gap:10px; border:1px solid #1e293b; }
-    .item-name { flex:1; }
-    .checked { text-decoration: line-through; opacity:0.5; }
+header {
+  position:sticky;
+  top:0;
+  background:#020617;
+  padding:15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid #1e293b;
+}
 
-    input { padding:8px; border-radius:8px; border:none; background:#1e293b; color:white; }
-    .price { width:90px; text-align:right; }
+.total { font-size:1.4rem; font-weight:bold; color:#22c55e; }
+.total.over { color:#ef4444; }
 
-    .delete-btn { background:#ef4444; color:white; border:none; border-radius:8px; padding:6px 10px; cursor:pointer; }
+.container { padding:12px; }
 
-    .footer { position:sticky; bottom:0; background:#020617; padding:10px; border-top:1px solid #1e293b; }
-    .input-group { display:flex; gap:8px; }
-    .input-group input { flex:1; }
+.item {
+  background:#020617;
+  margin-bottom:10px;
+  padding:12px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border:1px solid #1e293b;
+}
 
-    .add-btn { background:#3b82f6; color:white; border:none; border-radius:8px; padding:10px; cursor:pointer; }
-    .reset-btn { width:100%; margin-top:8px; background:#ef4444; color:white; border:none; border-radius:8px; padding:10px; cursor:pointer; }
-  </style>
+.item-name { flex:1; }
+.checked { text-decoration: line-through; opacity:0.5; }
+
+input {
+  padding:8px;
+  border-radius:8px;
+  border:none;
+  background:#1e293b;
+  color:white;
+}
+
+.price { width:90px; text-align:right; }
+
+.delete-btn {
+  background:#ef4444;
+  color:white;
+  border:none;
+  border-radius:8px;
+  padding:6px 10px;
+  cursor:pointer;
+}
+
+.footer {
+  position:sticky;
+  bottom:0;
+  background:#020617;
+  padding:10px;
+  border-top:1px solid #1e293b;
+}
+
+.input-group { display:flex; gap:8px; margin-bottom:8px; }
+.input-group input { flex:1; }
+
+.add-btn {
+  background:#3b82f6;
+  color:white;
+  border:none;
+  border-radius:8px;
+  padding:10px;
+  cursor:pointer;
+}
+
+.reset-btn {
+  width:100%;
+  background:#ef4444;
+  color:white;
+  border:none;
+  border-radius:8px;
+  padding:10px;
+  cursor:pointer;
+}
+
+.budget {
+  margin-top:8px;
+  display:flex;
+  gap:8px;
+}
+</style>
 </head>
 <body>
 
 <header>
   <span>Total</span>
-  <span class="total">R$ <span id="total">0.00</span></span>
+  <span id="totalContainer" class="total">R$ <span id="total">0.00</span></span>
 </header>
 
 <div class="container" id="list"></div>
@@ -43,14 +109,23 @@
     <input id="qty" type="number" placeholder="Qtd"/>
     <button class="add-btn" onclick="addItem()">+</button>
   </div>
+
+  <div class="budget">
+    <input id="budget" placeholder="Orçamento (ex: 30000)" inputmode="numeric"/>
+  </div>
+
   <button class="reset-btn" onclick="resetList()">Resetar Lista</button>
 </div>
 
 <script>
 let items = JSON.parse(localStorage.getItem('items')) || [];
+let budget = localStorage.getItem('budget') || '';
+
+document.getElementById('budget').value = budget;
 
 function save() {
   localStorage.setItem('items', JSON.stringify(items));
+  localStorage.setItem('budget', budget);
 }
 
 function formatCents(value) {
@@ -60,12 +135,25 @@ function formatCents(value) {
 
 function calcTotal() {
   let total = 0;
+
   items.forEach(i => {
     if (i.checked && i.priceCents) {
       total += (parseInt(i.priceCents, 10) || 0) / 100;
     }
   });
+
   document.getElementById('total').innerText = total.toFixed(2);
+
+  const totalEl = document.getElementById('totalContainer');
+
+  if (budget) {
+    const budgetValue = parseInt(budget) / 100;
+    if (total > budgetValue) {
+      totalEl.classList.add('over');
+    } else {
+      totalEl.classList.remove('over');
+    }
+  }
 }
 
 function render() {
@@ -134,6 +222,12 @@ function resetList() {
     render();
   }
 }
+
+document.getElementById('budget').addEventListener('input', (e) => {
+  budget = e.target.value.replace(/\D/g, '');
+  calcTotal();
+  save();
+});
 
 render();
 </script>
