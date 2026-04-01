@@ -172,6 +172,7 @@ function calcTotal() {
   const budgetValue = (parseInt(budget || '0') || 0) / 100;
   const info = document.getElementById('budgetInfo');
   const bar = document.getElementById('progressBar');
+  const warning = document.getElementById('warning'); // 👈 AQUI
 
   if (budgetValue > 0) {
     info.innerText = `de R$ ${budgetValue.toFixed(2)}`;
@@ -182,9 +183,18 @@ function calcTotal() {
     if (percent < 70) bar.style.background = '#22c55e';
     else if (percent < 100) bar.style.background = '#facc15';
     else bar.style.background = '#ef4444';
+
+    // ✅ LÓGICA DO WARNING
+    if (total > budgetValue) {
+      warning.style.display = 'block';
+    } else {
+      warning.style.display = 'none';
+    }
+
   } else {
     info.innerText = '';
     bar.style.width = '0%';
+    warning.style.display = 'none'; // 👈 importante
   }
 }
 
@@ -266,14 +276,6 @@ document.getElementById('budget').addEventListener('input', (e) => {
   calcTotal();
   save();
 });
-
-const warning = document.getElementById('warning');
-
-if (budgetValue > 0 && total > budgetValue) {
-  warning.style.display = 'block';
-} else {
-  warning.style.display = 'none';
-}
 
 render();
 </script>
