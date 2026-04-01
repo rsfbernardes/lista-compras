@@ -32,7 +32,11 @@ header {
 }
 
 .item-name { flex:1; }
-.checked { text-decoration: line-through; opacity:0.5; }
+
+.checked {
+  text-decoration: line-through;
+  opacity:0.5;
+}
 
 input {
   padding:8px;
@@ -109,14 +113,13 @@ input {
 }
 </style>
 </head>
+
 <body>
 
 <header>
   <div>Total</div>
-  <div id="warning" style="font-size:12px; color:#ef4444; display:none;">
-  ⚠️ Orçamento excedido
-</div>
   <div id="total" class="total">R$ 0.00</div>
+  <div id="warning" style="font-size:12px;"></div>
   <div id="budgetInfo" style="font-size:12px; opacity:0.7;"></div>
 </header>
 
@@ -129,7 +132,7 @@ input {
 <div class="footer">
   <div class="input-group">
     <input id="name" placeholder="Produto"/>
-    <input id="qty" class="qty-input" type="number" placeholder="Qtd"/>
+    <input id="qty" class="qty-input" type="number" placeholder="Qtd" min="1" step="1"/>
     <button class="add-btn" onclick="addItem()">+</button>
   </div>
 
@@ -160,7 +163,7 @@ function calcTotal() {
   let total = 0;
 
   items.forEach(i => {
-    if (i.checked && i.priceCents) {
+    if (i.priceCents) {
       const price = (parseInt(i.priceCents, 10) || 0) / 100;
       const qty = parseInt(i.qty) || 1;
       total += price * qty;
@@ -169,10 +172,10 @@ function calcTotal() {
 
   document.getElementById('total').innerText = `R$ ${total.toFixed(2)}`;
 
-  const budgetValue = (parseInt(budget || '0') || 0) / 100;
+  const budgetValue = Number(budget || 0) / 100;
   const info = document.getElementById('budgetInfo');
   const bar = document.getElementById('progressBar');
-  const warning = document.getElementById('warning'); // 👈 AQUI
+  const warning = document.getElementById('warning');
 
   if (budgetValue > 0) {
     info.innerText = `de R$ ${budgetValue.toFixed(2)}`;
@@ -184,17 +187,20 @@ function calcTotal() {
     else if (percent < 100) bar.style.background = '#facc15';
     else bar.style.background = '#ef4444';
 
-    // ✅ LÓGICA DO WARNING
-    if (total > budgetValue) {
-      warning.style.display = 'block';
+    const diff = total - budgetValue;
+
+    if (diff > 0) {
+      warning.style.color = '#ef4444';
+      warning.innerText = `⚠️ Acima do orçamento em R$ ${diff.toFixed(2)}`;
     } else {
-      warning.style.display = 'none';
+      warning.style.color = '#22c55e';
+      warning.innerText = `✔ Restam R$ ${Math.abs(diff).toFixed(2)}`;
     }
 
   } else {
     info.innerText = '';
     bar.style.width = '0%';
-    warning.style.display = 'none'; // 👈 importante
+    warning.innerText = '';
   }
 }
 
@@ -213,7 +219,7 @@ function render() {
       <span class="item-name ${item.checked ? 'checked' : ''}">
         ${item.qty}x ${item.name}
       </span>
-      ${item.checked ? `<input class="price" inputmode="numeric" value="${priceDisplay}" oninput="handlePriceInput(event, ${index})" />` : ''}
+      <input class="price" inputmode="numeric" value="${priceDisplay}" oninput="handlePriceInput(event, ${index})" />
       <button class="delete-btn" onclick="removeItem(${index})">✕</button>
     `;
 
@@ -242,7 +248,9 @@ function handlePriceInput(event, index) {
 
 function addItem() {
   const name = document.getElementById('name').value;
-  const qty = document.getElementById('qty').value || 1;
+
+  let qty = parseInt(document.getElementById('qty').value);
+  if (isNaN(qty) || qty <= 0) qty = 1;
 
   if (!name) return;
 
@@ -250,6 +258,8 @@ function addItem() {
 
   document.getElementById('name').value = '';
   document.getElementById('qty').value = '';
+
+  document.getElementById('name').focus();
 
   render();
 }
@@ -263,7 +273,11 @@ function resetList() {
   if (confirm('Deseja apagar tudo?')) {
     items = [];
     budget = '';
+
     document.getElementById('budget').value = '';
+    document.getElementById('name').value = '';
+    document.getElementById('qty').value = '';
+
     render();
   }
 }
