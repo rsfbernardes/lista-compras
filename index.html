@@ -13,14 +13,10 @@ header {
   top:0;
   background:#020617;
   padding:15px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
   border-bottom:1px solid #1e293b;
 }
 
-.total { font-size:1.4rem; font-weight:bold; color:#22c55e; }
-.total.over { color:#ef4444; }
+.total { font-size:1.4rem; font-weight:bold; }
 
 .container { padding:12px; }
 
@@ -87,19 +83,30 @@ input {
   cursor:pointer;
 }
 
-.budget {
-  margin-top:8px;
-  display:flex;
-  gap:8px;
+.progress-container {
+  height:6px;
+  background:#1e293b;
+}
+
+.progress-bar {
+  height:6px;
+  width:0%;
+  background:#22c55e;
+  transition:0.3s;
 }
 </style>
 </head>
 <body>
 
 <header>
-  <span>Total</span>
-  <span id="totalContainer" class="total">R$ <span id="total">0.00</span></span>
+  <div>Total</div>
+  <div id="total" class="total">R$ 0.00</div>
+  <div id="budgetInfo" style="font-size:12px; opacity:0.7;"></div>
 </header>
+
+<div class="progress-container">
+  <div id="progressBar" class="progress-bar"></div>
+</div>
 
 <div class="container" id="list"></div>
 
@@ -110,8 +117,8 @@ input {
     <button class="add-btn" onclick="addItem()">+</button>
   </div>
 
-  <div class="budget">
-    <input id="budget" placeholder="Orçamento (ex: 30000)" inputmode="numeric"/>
+  <div class="input-group">
+    <input id="budget" placeholder="Orçamento (ex: 300)" inputmode="numeric"/>
   </div>
 
   <button class="reset-btn" onclick="resetList()">Resetar Lista</button>
@@ -121,7 +128,7 @@ input {
 let items = JSON.parse(localStorage.getItem('items')) || [];
 let budget = localStorage.getItem('budget') || '';
 
-document.getElementById('budget').value = budget;
+document.getElementById('budget').value = budget ? (parseInt(budget)/100).toFixed(2) : '';
 
 function save() {
   localStorage.setItem('items', JSON.stringify(items));
@@ -142,17 +149,28 @@ function calcTotal() {
     }
   });
 
-  document.getElementById('total').innerText = total.toFixed(2);
+  document.getElementById('total').innerText = `R$ ${total.toFixed(2)}`;
 
-  const totalEl = document.getElementById('totalContainer');
+  const budgetValue = (parseInt(budget || '0') || 0) / 100;
+  const info = document.getElementById('budgetInfo');
+  const bar = document.getElementById('progressBar');
 
-  if (budget) {
-    const budgetValue = parseInt(budget) / 100;
-    if (total > budgetValue) {
-      totalEl.classList.add('over');
+  if (budgetValue > 0) {
+    info.innerText = `de R$ ${budgetValue.toFixed(2)}`;
+
+    const percent = (total / budgetValue) * 100;
+    bar.style.width = Math.min(percent, 100) + '%';
+
+    if (percent < 70) {
+      bar.style.background = '#22c55e';
+    } else if (percent < 100) {
+      bar.style.background = '#facc15';
     } else {
-      totalEl.classList.remove('over');
+      bar.style.background = '#ef4444';
     }
+  } else {
+    info.innerText = '';
+    bar.style.width = '0%';
   }
 }
 
@@ -224,7 +242,10 @@ function resetList() {
 }
 
 document.getElementById('budget').addEventListener('input', (e) => {
-  budget = e.target.value.replace(/\D/g, '');
+  let digits = e.target.value.replace(/\D/g, '');
+  budget = digits;
+  e.target.value = (parseInt(digits || '0') / 100).toFixed(2);
+
   calcTotal();
   save();
 });
