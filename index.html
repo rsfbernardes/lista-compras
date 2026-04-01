@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista de Compras Premium</title>
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      background: #020617;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .total {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #22c55e;
+    }
+
+    .container {
+      padding: 12px;
+    }
+
+    .item {
+      background: #020617;
+      margin-bottom: 10px;
+      padding: 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: 0.2s;
+      border: 1px solid #1e293b;
+    }
+
+    .item:hover {
+      transform: scale(1.01);
+    }
+
+    .item-name {
+      flex: 1;
+      font-size: 0.95rem;
+    }
+
+    .checked {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    input[type="number"] {
+      width: 70px;
+      padding: 6px;
+      border-radius: 6px;
+      border: none;
+      background: #1e293b;
+      color: white;
+    }
+
+    .footer {
+      position: sticky;
+      bottom: 0;
+      background: #020617;
+      padding: 10px;
+      border-top: 1px solid #1e293b;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-group input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #1e293b;
+      color: white;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .add-btn {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .reset-btn {
+      width: 100%;
+      margin-top: 8px;
+      background: #ef4444;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span>Total</span>
+  <span class="total">R$ <span id="total">0.00</span></span>
+</header>
+
+<div class="container" id="list"></div>
+
+<div class="footer">
+  <div class="input-group">
+    <input id="name" placeholder="Produto" />
+    <input id="qty" type="number" placeholder="Qtd" />
+    <button class="add-btn" onclick="addItem()">+</button>
+  </div>
+  <button class="reset-btn" onclick="resetList()">Resetar Lista</button>
+</div>
+
+<script>
+let items = JSON.parse(localStorage.getItem('items')) || [];
+
+function save() {
+  localStorage.setItem('items', JSON.stringify(items));
+}
+
+function render() {
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+
+  let total = 0;
+
+  items.forEach((item, index) => {
+    if (item.checked && item.price) {
+      total += parseFloat(item.price);
+    }
+
+    const div = document.createElement('div');
+    div.className = 'item';
+
+    div.innerHTML = `
+      <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggle(${index})" />
+      <span class="item-name ${item.checked ? 'checked' : ''}">${item.name} (${item.qty})</span>
+      ${item.checked ? `<input type="number" placeholder="R$" value="${item.price}" oninput="updatePrice(${index}, this.value)" />` : ''}
+    `;
+
+    list.appendChild(div);
+  });
+
+  document.getElementById('total').innerText = total.toFixed(2);
+  save();
+}
+
+function toggle(index) {
+  items[index].checked = !items[index].checked;
+  render();
+}
+
+function updatePrice(index, value) {
+  items[index].price = value;
+  render();
+}
+
+function addItem() {
+  const name = document.getElementById('name').value;
+  const qty = document.getElementById('qty').value || 1;
+
+  if (!name) return;
+
+  items.push({ name, qty, price: '', checked: false });
+
+  document.getElementById('name').value = '';
+  document.getElementById('qty').value = '';
+
+  render();
+}
+
+function resetList() {
+  if (confirm('Deseja apagar tudo?')) {
+    items = [];
+    render();
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>
+
