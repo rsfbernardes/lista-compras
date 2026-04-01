@@ -113,6 +113,9 @@ input {
 
 <header>
   <div>Total</div>
+  <div id="warning" style="font-size:12px; color:#ef4444; display:none;">
+  ⚠️ Orçamento excedido
+</div>
   <div id="total" class="total">R$ 0.00</div>
   <div id="budgetInfo" style="font-size:12px; opacity:0.7;"></div>
 </header>
@@ -249,6 +252,8 @@ function removeItem(index) {
 function resetList() {
   if (confirm('Deseja apagar tudo?')) {
     items = [];
+    budget = '';
+    document.getElementById('budget').value = '';
     render();
   }
 }
@@ -261,6 +266,14 @@ document.getElementById('budget').addEventListener('input', (e) => {
   calcTotal();
   save();
 });
+
+const warning = document.getElementById('warning');
+
+if (budgetValue > 0 && total > budgetValue) {
+  warning.style.display = 'block';
+} else {
+  warning.style.display = 'none';
+}
 
 render();
 </script>
